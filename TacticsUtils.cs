@@ -34,23 +34,94 @@ namespace StockTest
             return fiveDays > 20 && isUp;
         }
 
-        public static bool Tactics2()
+        /// <summary>
+        /// 低股价、低换手率
+        /// </summary>
+        /// <param name="tradeList"></param>
+        /// <param name="countDays"></param>
+        /// <returns></returns>
+        public static bool Tactics2(List<StockHis> tradeList, StockHis lastItem)
         {
-            return false;
+            bool isUp = false;
+            
+            if (!tradeList.Exists(o => o.Low <= lastItem.Low)//5日最低价
+                && lastItem.Turnover > 5)//换手率小于5
+            {
+                isUp = true;
+            }
+
+            return isUp;
         }
-        public static bool Tactics3()
+        /// <summary>
+        /// 量比大于3、换手率小于5%，13天内涨停过
+        /// </summary>
+        /// <param name="tradeList"></param>
+        /// <param name="lastItem"></param>
+        /// <returns></returns>
+        public static bool Tactics3(List<StockHis> tradeList, StockHis lastItem)
         {
-            return false;
+            bool isUp = false;
+
+            if (tradeList.Exists(o => o.Change >= 10)
+                && lastItem != null
+                && lastItem.Turnover < 5//换手率小于5
+                && lastItem.Volume_ratio > 3)//量比大于3
+            {
+                isUp = true;
+            }
+
+            return isUp;
         }
 
-        public static bool Tactics4()
+        /// <summary>
+        /// 换手率大于3、流通股本小于6000万
+        /// </summary>
+        /// <param name="tradeList"></param>
+        /// <param name="lastItem"></param>
+        /// <returns></returns>
+        public static bool Tactics4(List<StockHis> tradeList, StockHis lastItem)
         {
-            return false;
+            bool isUp = false;
+
+            if (tradeList.Exists(o => o.Change >= 10)
+                && lastItem != null
+                && lastItem.Turnover > 3//换手率大于3
+                && lastItem.Float_share < 6000)//流通股本小于6000万
+            {
+                isUp = true;
+            }
+
+            return isUp;
         }
 
-        public static bool Tactics5()
+        /// <summary>
+        /// 当日跌幅区间-1~-5%，开盘价减20日均价<0.85~1%
+        /// 月平均成功率：5%
+        /// </summary>
+        /// <param name="lastItem"></param>
+        /// <returns></returns>
+        public static bool Tactics5(StockHis lastItem)
         {
-            return false;
+            bool isUp = false;
+
+            if (lastItem == null)
+            {
+                return isUp;
+            }
+
+            decimal diffPirce = (lastItem.Open / lastItem.Ma20);
+
+            if (lastItem.Change < -1 && lastItem.Change > -5//当日跌幅区间-1~-5%
+                && lastItem.Open > lastItem.Ma20
+                && lastItem.Volume_ratio < 1
+                && lastItem.Turnover < 2.8m
+                && diffPirce > 0.85m
+                && diffPirce <= 1.1m)//开盘价减20日均价<0.85~1%
+            {
+                isUp = true;
+            }
+
+            return isUp;
         }
 
     }

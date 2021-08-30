@@ -86,11 +86,21 @@ namespace StockTest
         /// </summary>
         public decimal V_ma20 { get; set; }
 
+        /// <summary>
+        /// 量比
+        /// </summary>
+        public decimal Volume_ratio { get; set; }
+
+        /// <summary>
+        /// 流通股本
+        /// </summary>
+        public decimal Float_share { get; set; }
+
         public override string ToString()
         {
             if (this != null)
             {
-                return string.Format(@"股票代码:{0},交易日期:{1},开盘价:{2},收盘价:{3},最高价:{4},最低价:{5},成交量:{6},涨跌幅:{7},换手率:{8},5日均价:{9},10日均价:{10},20日均价:{11},5日均量:{12},10日均量:{13},20日均量:{14}",
+                return string.Format(@"股票代码:{0},交易日期:{1},开盘价:{2},收盘价:{3},最高价:{4},最低价:{5},成交量:{6},涨跌幅:{7},换手率:{8},5日均价:{9},10日均价:{10},20日均价:{11},5日均量:{12},10日均量:{13},20日均量:{14},量比:{15}",
                     this.Code,
                     this.Date,
                     this.Open,
@@ -105,7 +115,8 @@ namespace StockTest
                     this.Ma20,
                     this.V_ma5,
                     this.V_ma10,
-                    this.V_ma20);
+                    this.V_ma20,
+                    this.Volume_ratio);
             }
 
             return "Allstock is null";

@@ -23,20 +23,20 @@ namespace StockTest
 
                 ageList.Clear();
 
-                DateTime countdate = new DateTime(2021, 8, 4);//计算时间
-                RunStock(conn, allstocks, countdate);
+                //DateTime countdate = new DateTime(2021, 8, 5);//计算时间
+                //RunStock(conn, allstocks, countdate);
 
-                //for (int i = 1; i < 31; i++)
-                //{
-                //    DateTime countdate = new DateTime(2021, 7, i);//计算时间
+                for (int i = 1; i < 31; i++)
+                {
+                    DateTime countdate = new DateTime(2021, 8, i);//计算时间
 
-                //    if (countdate.DayOfWeek == System.DayOfWeek.Saturday || countdate.DayOfWeek == System.DayOfWeek.Sunday)
-                //    {
-                //        continue;
-                //    }
+                    if (countdate.DayOfWeek == System.DayOfWeek.Saturday || countdate.DayOfWeek == System.DayOfWeek.Sunday)
+                    {
+                        continue;
+                    }
 
-                //    RunStock(conn, allstocks, countdate);
-                //}
+                    RunStock(conn, allstocks, countdate);
+                }
 
             }
             catch (Exception e)
@@ -58,7 +58,7 @@ namespace StockTest
         {
             int count = 0;
 
-            int countDays = 5;//计算天数
+            int countDays = 7;//计算天数
             
             string enddate = countdate.ToString("yyyyMMdd");//结束时间
 
@@ -114,17 +114,16 @@ namespace StockTest
 
                 var tradeList = QueryAllStock(conn, item.Code, startdate, enddate);
 
-                if (tradeList != null && tradeList.Count == countDays)
+                if (tradeList != null)//&& tradeList.Count == countDays
                 {
-                    bool isMatch = TacticsUtils.Tactics1(tradeList, countDays);//匹配策略
-
                     var lastItem = tradeList.FirstOrDefault(x => x.Date == enddate);
                     tradeList.Remove(lastItem);
 
-                    
-                    // && lastItem.Turnover >= 4//换手率大于4
+                    //bool isMatch = TacticsUtils.Tactics1(tradeList, countDays);//匹配策略
+                    bool isMatch = TacticsUtils.Tactics5(lastItem);//匹配策略
+
                     //&& lastItem.V_ma5 >= 9000//5日均量大于9000万
-                    //!tradeList.Exists(o => o.Low <= lastItem.Low)//5日最低价
+                    
                     if (lastItem != null && isMatch)
                     {
                         //lastTradeList.Add(lastItem);
@@ -140,9 +139,9 @@ namespace StockTest
                         if (nextDayTradeList.Exists(o => o.Code == item.Code))
                         {
                             count1++;
-                            var item1 = nextDayTradeList.FirstOrDefault(o => o.Code == item.Code);
-                            var stockItem = allstocks.FirstOrDefault(o => o.Code == item.Code);
-                            Console.WriteLine(string.Format("{0}已匹配：{1}", count1, item1.ToString()));
+                            //var item1 = nextDayTradeList.FirstOrDefault(o => o.Code == item.Code);
+                            //var stockItem = allstocks.FirstOrDefault(o => o.Code == item.Code);
+                            //Console.WriteLine(string.Format("{0}已匹配：{1}", count1, item1.ToString()));
                             //var showLastList = lastTradeList.Where(o => o.Code == item.Code).OrderByDescending(o => o.Date).ToList();
                             //foreach (var item1 in showLastList)
                             //{
@@ -327,12 +326,14 @@ namespace StockTest
             try
             {
                 // 创建命令
-                string sql = string.Format(@"SELECT * FROM stock_his
+                string sql = string.Format(@"SELECT stock_his.*,allstock.*,stock_dailyhis.volume_ratio,float_share FROM stock_his
                         LEFT JOIN allstock ON allstock.`code` = stock_his.s_code
+                        LEFT JOIN stock_dailyhis ON stock_dailyhis.ts_code = stock_his.s_code AND stock_dailyhis.trade_date = date
                         WHERE date = '{0}'
                         AND p_change > 5 AND p_change <= 20
-                        AND `open` < `close`
+                        AND `open` < stock_his.`close`
                         AND market <> '科创板'
+                        AND volume_ratio is not null
                         ORDER BY p_change ", enddate);
                 MySqlCommand cmd = new MySqlCommand(sql, conn);
                 // 读取数据
@@ -362,6 +363,8 @@ namespace StockTest
                     allstock.V_ma5 = reader.GetDecimal("v_ma5");
                     allstock.V_ma10 = reader.GetDecimal("v_ma10");
                     allstock.V_ma20 = reader.GetDecimal("v_ma20");
+                    allstock.Volume_ratio = reader.GetDecimal("volume_ratio");
+                    allstock.Float_share = reader.GetDecimal("float_share");
 
                     allstocks.Add(allstock);
                 }
@@ -388,7 +391,10 @@ namespace StockTest
             try
             {
                 // 创建命令
-                string sql = string.Format("select * from stock_{0} WHERE date BETWEEN '{1}' AND '{2}' ", code, startdate, enddate);
+                string sql = string.Format(@"SELECT stock_{0}.*,stock_dailyhis.volume_ratio,float_share FROM stock_{0}
+                                            LEFT JOIN stock_dailyhis ON stock_dailyhis.trade_date = stock_{0}.date
+                                            AND stock_dailyhis.ts_code = '{0}' AND stock_dailyhis.trade_date = date
+                                            WHERE date BETWEEN '{1}' AND '{2}'", code, startdate, enddate);
                 MySqlCommand cmd = new MySqlCommand(sql, conn);
                 // 读取数据
                 MySqlDataReader reader = cmd.ExecuteReader();
@@ -417,6 +423,8 @@ namespace StockTest
                     allstock.V_ma5 = reader.GetDecimal("v_ma5");
                     allstock.V_ma10 = reader.GetDecimal("v_ma10");
                     allstock.V_ma20 = reader.GetDecimal("v_ma20");
+                    allstock.Volume_ratio = reader.GetDecimal("Volume_ratio");
+                    allstock.Float_share = reader.GetDecimal("float_share");
 
                     allstocks.Add(allstock);
                 }
