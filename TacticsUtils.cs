@@ -25,8 +25,12 @@ namespace StockTest
             tradeList = tradeList.OrderByDescending(x => x.Date).ToList();
             bool isUp = false;
 
-            if ((tradeList[0].Turnover < tradeList[1].Turnover && tradeList[1].Turnover > tradeList[2].Turnover)
-                && (tradeList.Where(o => o.Change > 0).ToList().Count == countDays || tradeList.Where(o => o.Change < 0).ToList().Count == 1))
+            if (tradeList.Count != countDays)
+            {
+                return false;
+            }
+            //(tradeList[0].Turnover < tradeList[1].Turnover && tradeList[1].Turnover > tradeList[2].Turnover) &&
+            if ((tradeList.Where(o => o.Change > 0).ToList().Count == 5 || tradeList.Where(o => o.Change < 0).ToList().Count == 1))
             {
                 isUp = true;
             }
@@ -117,6 +121,67 @@ namespace StockTest
                 && lastItem.Turnover < 2.8m
                 && diffPirce > 0.85m
                 && diffPirce <= 1.1m)//开盘价减20日均价<0.85~1%
+            {
+                isUp = true;
+            }
+
+            return isUp;
+        }
+
+        /// <summary>
+        /// 打板战法1
+        /// </summary>
+        /// <param name="lastItem"></param>
+        /// <returns></returns>
+        public static bool Tactics6(List<StockHis> tradeList, StockHis lastItem,string startDate)
+        {
+            bool isUp = false;
+
+            if (lastItem == null)
+            {
+                return isUp;
+            }
+
+            //if (tradeList.Exists(o => o.Change >= 10)
+            //    && lastItem != null && lastItem.Volume < lastItem.V_ma60 && lastItem.Change < 0)
+            //{
+            //    isUp = true;
+            //}
+            //排除今日股价低于60日均线
+            if (tradeList.Exists(o => o.Date == startDate && o.Change >= 10)
+                && lastItem != null && lastItem.Close > lastItem.Ma60)
+            {
+                isUp = true;
+            }
+
+            return isUp;
+        }
+
+        /// <summary>
+        /// 涨幅在3-5%
+        /// 量比大于等于1
+        /// 换手率在5%-10%
+        /// 流通市值在50亿-200亿
+        /// 收盘价大于60日均线
+        /// 月平均成功率：5%
+        /// </summary>
+        /// <param name="lastItem"></param>
+        /// <returns></returns>
+        public static bool Tactics7(StockHis lastItem)
+        {
+            bool isUp = false;
+
+            if (lastItem == null)
+            {
+                return isUp;
+            }
+
+            if (lastItem.Change > 3 && lastItem.Change < 5//当日涨幅在3-5%
+                && lastItem.Volume_ratio >= 1//量比大于等于1
+                && lastItem.Turnover > 5m && lastItem.Turnover < 10m//换手率在5%-10%
+                && lastItem.Circ_mv > 500000 && lastItem.Circ_mv < 1000000//流通市值在50亿-200亿
+                && lastItem.Close > lastItem.Ma60
+            )
             {
                 isUp = true;
             }
